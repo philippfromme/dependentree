@@ -1,0 +1,35 @@
+{
+  "name": "dependentree",
+  "version": "0.1.0",
+  "description": "🌲",
+  "scripts": {
+    "build": "webpack --mode=production",
+    "start": "webpack serve --open --mode=development --node-env development"
+  },
+  "keywords": [
+    "d3",
+    "github",
+    "npm"
+  ],
+  "author": {
+    "name": "Philipp Fromme",
+    "url": "https://github.com/philippfromme"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.18.10",
+    "@babel/preset-env": "^7.18.10",
+    "@babel/preset-react": "^7.18.6",
+    "babel-loader": "^8.2.5",
+    "css-loader": "^6.7.1",
+    "html-webpack-plugin": "^5.5.0",
+    "style-loader": "^3.3.1",
+    "webpack": "^5.73.0",
+    "webpack-cli": "^4.10.0",
+    "webpack-dev-server": "^4.9.3"
+  }
+}
