@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import * as d3 from "d3";
 
@@ -7,8 +7,6 @@ import { hierarchy, tree } from "d3-hierarchy";
 export default function Tree(props) {
   let {
     data,
-    width = 1000,
-    height,
     padding = 2,
     fill = "#000",
     stroke = "#000",
@@ -21,12 +19,24 @@ export default function Tree(props) {
     haloWidth = 3,
   } = props;
 
+  const [rect, setRect] = useState(null);
+
   const ref = useRef();
 
+  const measuredRef = useCallback((node) => {
+    if (node !== null) {
+      setRect(node.getBoundingClientRect());
+    }
+  }, []);
+
   useEffect(() => {
-    if (!data || !Object.keys(data).length) {
+    if (!ref.current || !rect || !rect.width || !data) {
       return;
     }
+
+    console.log("rect", rect);
+
+    let { width, height } = rect;
 
     const root = hierarchy(data, ({ dependencies }) =>
       Object.values(dependencies)
@@ -48,8 +58,11 @@ export default function Tree(props) {
       if (d.x < x0) x0 = d.x;
     });
 
+    console.log("width", width);
+    console.log("height", height);
+
     // compute default height
-    if (height === undefined) height = x1 - x0 + dx * 2;
+    height = height || x1 - x0 + dx * 2;
 
     const svg = d3.select(ref.current);
 
@@ -110,7 +123,11 @@ export default function Tree(props) {
       .attr("stroke", halo)
       .attr("stroke-width", haloWidth)
       .text((d, i) => d.data.name);
-  }, [data, height, width, padding]);
+  }, [data, rect]);
 
-  return <svg ref={ref} />;
+  return (
+    <div className="tree__svg" ref={measuredRef}>
+      <svg ref={ref} />
+    </div>
+  );
 }

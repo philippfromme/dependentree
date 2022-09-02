@@ -1,0 +1,33 @@
+@use '@carbon/react';
+@use '@carbon/layout/scss/generated/spacing';
+
+html, body, #app {
+  height: 100%;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  padding-top: spacing.$spacing-09;
+}
+
+.tree {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  .tree__loading {
+    width: auto;
+  }
+
+  .tree__svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.tile-no-data {
+  min-width: 75ch;
+  min-height: 25vh;
+}

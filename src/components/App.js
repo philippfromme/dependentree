@@ -1,177 +1,130 @@
 import React, { useEffect, useState } from "react";
 
+import {
+  Button,
+  Header,
+  HeaderName,
+  HeaderGlobalBar,
+  HeaderGlobalAction,
+  InlineLoading,
+  Search,
+  Stack,
+  Tile,
+} from "carbon-components-react";
+
+import { LogoGithub } from "@carbon/icons-react";
+
 import Tree from "./Tree";
 
-function isMaintainedBy(pkgJson, maintainer) {
-  return pkgJson.maintainers.find(({ name }) => name === maintainer);
-}
+import { fetchPackage } from "../api";
 
-async function fetchGitHubPkg(
-  packageJsonPath = "camunda/camunda-modeler/develop/client/package.json"
-) {
-  const result = await fetch(
-    `https://raw.githubusercontent.com/${packageJsonPath}`
-  );
-
-  const pkgJson = await result.json();
-
-  return pkgJson;
-}
-
-fetchGitHubPkg();
-
-async function fetchPgksMaintainedBy(maintainer = "bpmn-io-admin") {
-  const result = await fetch(
-    `https://registry.npmjs.org/-/v1/search?text=maintainer:${maintainer}&size=250`
-  );
-
-  const pkgJson = await result.json();
-
-  const packages = pkgJson.objects
-    .map(({ package: pkg }) => pkg)
-    .sort((a, b) => {
-      const nameA = a.name.toUpperCase(); // ignore upper and lowercase
-      const nameB = b.name.toUpperCase(); // ignore upper and lowercase
-      if (nameA < nameB) {
-        return -1;
-      }
-      if (nameA > nameB) {
-        return 1;
-      }
-
-      // names must be equal
-      return 0;
-    });
-
-  return packages;
-}
-
-async function fetchPackage(
-  name,
-  fetchDependencies = true,
-  fetchDevDependencies = false
-) {
-  console.log("fetch package", name);
-
-  const isGithub = name.split(":")[0] === "github";
-
-  let pkgJson;
-
-  if (isGithub) {
-    pkgJson = await fetchGitHubPkg(name.split(":")[1]);
-  } else {
-    const result = await fetch(`https://registry.npmjs.org/${name}/latest`);
-
-    pkgJson = await result.json();
-  }
-
-  let dependencies = {};
-
-  if (fetchDependencies) {
-    for (let dependency in pkgJson.dependencies) {
-      const _dependency = await fetchPackage(dependency);
-
-      if (isMaintainedBy(_dependency.pkgJson, "bpmn-io-admin")) {
-        dependencies = { ...dependencies, [dependency]: _dependency };
-      }
-    }
-  }
-
-  if (fetchDevDependencies) {
-    for (let devDependency in pkgJson.devDependencies) {
-      const _devDependency = await fetchPackage(devDependency, false, false);
-
-      if (isMaintainedBy(_devDependency.pkgJson, "bpmn-io-admin")) {
-        dependencies = {
-          ...dependencies,
-          [devDependency]: {
-            ..._devDependency,
-            isDevDependency: true,
-          },
-        };
-      }
-    }
-  }
-
-  return {
-    name: pkgJson.name,
-    pkgJson,
-    dependencies,
-  };
-}
+import {
+  paramsToSearch,
+  queryToOptions,
+  queryToParams,
+  searchToQuery
+} from '../search';
 
 export default function App() {
-  const [availablePkgs, setAvailablePkgs] = useState([]);
-  const [pkgName, setPkgName] = useState("bpmn-js");
-  const [data, setData] = useState({});
-  const [fetching, setFetching] = useState({});
-  const [fetchDevDependencies, setFetchDevDependencies] = useState(false);
+  const [data, setData] = useState(null);
+  const [fetching, setFetching] = useState(true);
+  const [query, setQuery] = useState(null);
+  const [search, setSearch] = useState("");
+
+  useState(() => {
+    const params = new URLSearchParams(location.search);
+
+    const search = paramsToSearch(params);
+
+    console.log(location.search, search);
+
+    setSearch(search);
+  }, []);
 
   useEffect(() => {
+    const query = searchToQuery(search);
+
+    setQuery(query);
+
+    const params = queryToParams(query);
+
+    history.pushState(null, "", location.pathname + "?" + params.toString());
+  }, [search]);
+
+  useEffect(() => {
+    if (!query || !query.length) return;
+
     (async () => {
       setFetching(true);
 
-      const _pkgs = await fetchPackage(pkgName, true, fetchDevDependencies);
+      try {
+        const pkgs = await fetchPackage(queryToOptions(query));
 
-      setData(_pkgs);
-
-      console.log(_pkgs);
-
-      const pkgsMaintainedBy = await fetchPgksMaintainedBy();
-
-      setAvailablePkgs([
-        ...pkgsMaintainedBy,
-        {
-          name: "github:camunda/camunda-modeler/develop/client/package.json",
-          label: "Camunda Modeler",
-        },
-      ]);
+        setData(pkgs);
+      } catch (error) {
+        console.log('error fetching packages', error);
+      }
 
       setFetching(false);
     })();
-  }, [pkgName, fetchDevDependencies]);
+  }, [query]);
+
+  const onSearchChange = ({ target }) => setSearch(target.value);
 
   return (
-    <div className="App">
-      <h1>bpmn.io Package Explorer</h1>
-      <div>
-        <label htmlFor="select-package">Select Package</label>
-        <br />
-        <br />
-        <select
-          id="select-package"
-          value={pkgName}
-          onChange={(e) => setPkgName(e.target.value)}
-        >
-          {availablePkgs.map(({ label, name }) => {
-            return (
-              <option key={name} value={name}>
-                {label || name}
-              </option>
-            );
-          })}
-        </select>
-        <br />
-        <br />
-        <label htmlFor="inlcude-dev-dependencies">
-          Include Development Dependencies
-        </label>
-        <br />
-        <br />
-        <input
-          id="include-dev-dependencies"
-          type="checkbox"
-          value={fetchDevDependencies}
-          onChange={() => setFetchDevDependencies(!fetchDevDependencies)}
+    <>
+      <Header aria-label="Dependentree">
+        <HeaderName href="#" prefix="">
+          Dependentree
+        </HeaderName>
+        <HeaderGlobalBar>
+          <HeaderGlobalAction
+            aria-label="Login with GitHub"
+            onClick={() => {}}
+            tooltipAlignment="end"
+          >
+            <LogoGithub size={20} />
+          </HeaderGlobalAction>
+        </HeaderGlobalBar>
+      </Header>
+      <Tile>
+        <Search
+          spellCheck={false}
+          size="lg"
+          value={search}
+          labelText="Search"
+          closeButtonLabelText="Clear search input"
+          id="search-1"
+          onChange={onSearchChange}
+          onKeyDown={() => {}}
+          autoComplete="hello"
         />
-      </div>
-      {fetching ? <h2>Fetching...</h2> : null}
-      {fetching ? null : (
-        <div>
-          <h2>Tree</h2>
+      </Tile>
+      <div className="tree">
+        {fetching ? (
+          <InlineLoading
+            className="tree__loading"
+            description="Fetching dependencies..."
+          />
+        ) : data === null ? (
+          <Tile className="tile-no-data">
+            <Stack gap={6}>
+              <h1>No data</h1>
+              <Button
+                onClick={() =>
+                  setSearch(
+                    "ignore-dependencies:min-dash,min-dom ignore-dev-dependencies maintainers:bpmn-io-admin package:bpmn-js"
+                  )
+                }
+              >
+                Try example
+              </Button>
+            </Stack>
+          </Tile>
+        ) : (
           <Tree data={data} />
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   );
 }
