@@ -4,7 +4,17 @@ export function isMaintainedBy(pkgJson, maintainers) {
   return pkgJson.maintainers.find(({ name }) => maintainers.includes(name));
 }
 
+let controller = new AbortController();
+
 export async function fetchPackage(options) {
+  controller.abort();
+
+  controller = new AbortController();
+
+  return _fetchPackage(options);
+}
+
+async function _fetchPackage(options) {
   let {
     package: pkgName = null,
     maintainers = [],
@@ -18,7 +28,7 @@ export async function fetchPackage(options) {
 
   console.log("fetching", pkgName);
 
-  const response = await fetch(`https://registry.npmjs.org/${pkgName}/latest`);
+  const response = await fetch(`https://registry.npmjs.org/${pkgName}/latest`, { signal: controller.signal });
 
   const pkgJson = await response.json();
 

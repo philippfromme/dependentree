@@ -42,8 +42,6 @@ export default function Tree(props) {
       Object.values(dependencies)
     );
 
-    // console.log("hierarchy", root);
-
     // compute layout
     const dx = 25;
     const dy = width / (root.height + padding);

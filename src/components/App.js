@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 import {
   Button,
@@ -14,6 +14,8 @@ import {
 
 import { LogoGithub } from "@carbon/icons-react";
 
+import { debounce } from "lodash";
+
 import Tree from "./Tree";
 
 import { fetchPackage } from "../api";
@@ -22,8 +24,8 @@ import {
   paramsToSearch,
   queryToOptions,
   queryToParams,
-  searchToQuery
-} from '../search';
+  searchToQuery,
+} from "../search";
 
 export default function App() {
   const [data, setData] = useState(null);
@@ -62,14 +64,17 @@ export default function App() {
 
         setData(pkgs);
       } catch (error) {
-        console.log('error fetching packages', error);
+        console.log("error fetching packages", error);
       }
 
       setFetching(false);
     })();
   }, [query]);
 
-  const onSearchChange = ({ target }) => setSearch(target.value);
+  const onSearchChange = useCallback(
+    ({ target }) => setSearch(target.value),
+    [setSearch]
+  );
 
   return (
     <>
