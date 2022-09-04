@@ -5,8 +5,11 @@ import camelCase from "camelcase";
 const fields = [
   "ignore-dependencies",
   "ignore-dev-dependencies",
+  "ignore-peer-dependencies",
   "maintainers",
-  "package"
+  "max-depth",
+  "package",
+  "version"
 ];
 
 export function paramsToSearch(params) {
@@ -60,6 +63,9 @@ export function searchToQuery(search) {
     .parse()
     .toJSON()
     .map((field) => {
+      console.log("field", field);
+
+      // boolean
       if (field.type === "in") {
         return {
           name: field.value,
@@ -67,10 +73,19 @@ export function searchToQuery(search) {
         };
       }
 
+      // string
       if (field.type === "=") {
+        const type = fields[field.field];
+
+        let value = field.value;
+
+        if (value.length === 1) {
+          value = value[0];
+        }
+
         return {
           name: field.field,
-          value: field.value.split(",")
+          value
         };
       }
 

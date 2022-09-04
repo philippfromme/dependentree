@@ -9,12 +9,13 @@ import {
   InlineLoading,
   Search,
   Stack,
+  Tag,
   Tile,
 } from "carbon-components-react";
 
-import { LogoGithub } from "@carbon/icons-react";
+import { Add, LogoGithub } from "@carbon/icons-react";
 
-import { debounce } from "lodash";
+import { matchesProperty } from "lodash";
 
 import Tree from "./Tree";
 
@@ -105,6 +106,10 @@ export default function App() {
           autoComplete="hello"
         />
       </Tile>
+      <Examples
+        query={query}
+        onClick={(example) => setSearch(`${search.trim()} ${example}`)}
+      />
       <div className="tree">
         {fetching ? (
           <InlineLoading
@@ -131,5 +136,56 @@ export default function App() {
         )}
       </div>
     </>
+  );
+}
+
+function Examples(props) {
+  const { query, onClick } = props;
+
+  let tags = [];
+
+  if (!query?.find(matchesProperty("name", "ignore-dependencies"))) {
+    tags = [...tags, "ignore-dependencies:react"];
+  }
+
+  if (!query?.find(matchesProperty("name", "ignore-dev-dependencies"))) {
+    tags = [...tags, "ignore-dev-dependencies:webpack"];
+  }
+
+  if (!query?.find(matchesProperty("name", "ignore-peer-dependencies"))) {
+    tags = [...tags, "ignore-peer-dependencies:react"];
+  }
+
+  if (!query?.find(matchesProperty("name", "maintainers"))) {
+    tags = [...tags, "maintainers:philippfromme"];
+  }
+
+  if (!query?.find(matchesProperty("name", "max-depth"))) {
+    tags = [...tags, "max-depth:3"];
+  }
+
+  if (!query?.find(matchesProperty("name", "package"))) {
+    tags = [...tags, "package:webpack"];
+  }
+
+  if (!query?.find(matchesProperty("name", "version"))) {
+    tags = [...tags, "version:1.0.0"];
+  }
+
+  return (
+    <Tile className="tile-examples">
+      {tags.map((tag) => (
+        <Tag
+          style={{ border: "none", lineHeight: 1 }}
+          key={tag}
+          onClick={() => onClick(tag)}
+          renderIcon={Add}
+          size="md"
+          type="gray"
+        >
+          {tag}
+        </Tag>
+      ))}
+    </Tile>
   );
 }

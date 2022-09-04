@@ -1,4 +1,4 @@
-import { isArray } from "lodash";
+import { isArray, omit } from "lodash";
 
 export function isMaintainedBy(pkgJson, maintainers) {
   return pkgJson.maintainers.find(({ name }) => maintainers.includes(name));
@@ -11,6 +11,8 @@ export async function fetchPackage(options) {
 
   controller = new AbortController();
 
+  console.log('fetching with options', options);
+
   return _fetchPackage(options);
 }
 
@@ -20,19 +22,38 @@ async function _fetchPackage(options) {
     maintainers = [],
     ignoreDependencies = false,
     ignoreDevDependencies = true,
+    depth = 0,
+    maxDepth = Infinity,
+    version = "latest",
   } = options;
 
   if (!pkgName) {
     return null;
   }
 
-  console.log("fetching", pkgName);
+  console.log(`fetching ${pkgName}@${version}`);
 
-  const response = await fetch(`https://registry.npmjs.org/${pkgName}/latest`, { signal: controller.signal });
+  const response = await fetch(
+    `https://registry.npmjs.org/${pkgName}/${version}`,
+    {
+      signal: controller.signal,
+    }
+  );
 
   const pkgJson = await response.json();
 
   let dependencies = {};
+
+  console.log('depth', depth);
+  console.log('max depth', parseInt(maxDepth, 10));
+
+  if (parseInt(maxDepth, 10) !== NaN && depth === parseInt(maxDepth, 10)) {
+    return {
+      name: pkgJson.name,
+      pkgJson,
+      dependencies,
+    };
+  }
 
   if (ignoreDependencies !== true) {
     for (let dependency in pkgJson.dependencies) {
@@ -40,9 +61,10 @@ async function _fetchPackage(options) {
         !isArray(ignoreDependencies) ||
         !ignoreDependencies.includes(dependency)
       ) {
-        const dependencyNode = await fetchPackage({
-          ...options,
+        const dependencyNode = await _fetchPackage({
+          ...omit(options, ["version"]),
           package: dependency,
+          depth: depth + 1,
         });
 
         if (
@@ -61,11 +83,12 @@ async function _fetchPackage(options) {
         !isArray(ignoreDevDependencies) ||
         !ignoreDevDependencies.includes(dependency)
       ) {
-        const devDependencyNode = await fetchPackage({
-          ...options,
+        const devDependencyNode = await _fetchPackage({
+          ...omit(options, ["version"]),
           package: devDependency,
           ignoreDependencies: true,
           ignoreDevDependencies: true,
+          depth: depth + 1,
         });
 
         if (

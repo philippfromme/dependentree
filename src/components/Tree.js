@@ -29,12 +29,16 @@ export default function Tree(props) {
     }
   }, []);
 
+  const onMove = (event) => {
+    console.log(event);
+  };
+
   useEffect(() => {
     if (!ref.current || !rect || !rect.width || !data) {
       return;
     }
 
-    console.log("rect", rect);
+    ref.current.addEventListener("drag", onMove);
 
     let { width, height } = rect;
 
@@ -56,8 +60,7 @@ export default function Tree(props) {
       if (d.x < x0) x0 = d.x;
     });
 
-    console.log("width", width);
-    console.log("height", height);
+    console.log(root);
 
     // compute default height
     height = height || x1 - x0 + dx * 2;
@@ -121,6 +124,8 @@ export default function Tree(props) {
       .attr("stroke", halo)
       .attr("stroke-width", haloWidth)
       .text((d, i) => d.data.name);
+
+    return () => ref.current?.removeEventListener("drag", onMove);
   }, [data, rect]);
 
   return (
