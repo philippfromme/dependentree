@@ -1,4 +1,6 @@
-import { isArray, omit } from "lodash";
+import { isArray, isObject, omit } from "lodash";
+
+import semver from 'semver';
 
 export function isMaintainedBy(pkgJson, maintainers) {
   return pkgJson.maintainers.find(({ name }) => maintainers.includes(name));
@@ -42,8 +44,15 @@ async function _fetchPackage(options) {
 
   const pkgJson = await response.json();
 
-  if (pkgJson === 'Not Found') {
-    return null;
+  if (!isObject(pkgJson)) {
+    return {
+      name: pkgName,
+      pkgJson: null,
+      dependencies: {},
+      error: {
+        version
+      }
+    };;
   }
 
   let dependencies = {};
@@ -61,15 +70,28 @@ async function _fetchPackage(options) {
 
   if (ignoreDependencies !== true) {
     for (let dependency in pkgJson.dependencies) {
-      if (
-        !isArray(ignoreDependencies) ||
-        !ignoreDependencies.includes(dependency)
-      ) {
-        const dependencyNode = await _fetchPackage({
-          ...omit(options, ["version"]),
-          package: dependency,
-          depth: depth + 1,
-        });
+      if (!isArray(ignoreDependencies) || !ignoreDependencies.includes(dependency)) {
+        let dependencyNode;
+
+        if (semver.validRange(pkgJson.dependencies[ dependency ])) {
+          const { version } = semver.minVersion(pkgJson.dependencies[ dependency ]);
+  
+          dependencyNode = await _fetchPackage({
+            ...options,
+            version,
+            package: dependency,
+            depth: depth + 1,
+          });
+        } else {
+          dependencyNode = {
+            name: dependency,
+            pkgJson: null,
+            dependencies: {},
+            error: {
+              version: pkgJson.dependencies[ dependency ]
+            }
+          };
+        }
 
         if (
           !maintainers.length ||
@@ -83,17 +105,30 @@ async function _fetchPackage(options) {
 
   if (ignoreDevDependencies !== true) {
     for (let devDependency in pkgJson.devDependencies) {
-      if (
-        !isArray(ignoreDevDependencies) ||
-        !ignoreDevDependencies.includes(dependency)
-      ) {
-        const devDependencyNode = await _fetchPackage({
-          ...omit(options, ["version"]),
-          package: devDependency,
-          ignoreDependencies: true,
-          ignoreDevDependencies: true,
-          depth: depth + 1,
-        });
+      if (!isArray(ignoreDevDependencies) || !ignoreDevDependencies.includes(devDependency)) {
+        let devDependencyNode;
+
+        if (semver.validRange(pkgJson.devDependencies[ devDependency ])) {
+          const { version } = semver.minVersion(pkgJson.devDependencies[ devDependency ]);
+  
+          devDependencyNode = await _fetchPackage({
+            ...options,
+            version,
+            package: devDependency,
+            ignoreDependencies: true,
+            ignoreDevDependencies: true,
+            depth: depth + 1,
+          });
+        } else {
+          devDependencyNode = {
+            name: devDependency,
+            pkgJson: null,
+            dependencies: {},
+            error: {
+              version: pkgJson.devDependencies[ devDependency ]
+            }
+          };
+        }
 
         if (
           !maintainers.length ||
@@ -114,6 +149,6 @@ async function _fetchPackage(options) {
   return {
     name: pkgJson.name,
     pkgJson,
-    dependencies,
+    dependencies
   };
 }

@@ -22,11 +22,11 @@
     "camelcase": "^7.0.0",
     "carbon-components-react": "^8.17.0",
     "d3": "^7.6.1",
-    "d3-hierarchy": "^3.1.2",
     "filterable": "^2.0.1",
     "lodash": "^4.17.21",
     "react": "^16.14.0",
     "react-dom": "^16.14.0",
+    "semver": "^7.3.8"
   },
   "devDependencies": {
     "@babel/core": "^7.18.10",

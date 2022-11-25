@@ -39,7 +39,7 @@ export default function App() {
 
     const search = paramsToSearch(params);
 
-    console.log(location.search, search);
+    // console.log(location.search, search);
 
     setSearch(search);
   }, []);
@@ -95,6 +95,7 @@ export default function App() {
       </Header>
       <Tile>
         <Search
+          autoComplete="false"
           spellCheck={false}
           size="lg"
           value={search}
@@ -103,7 +104,6 @@ export default function App() {
           id="search-1"
           onChange={onSearchChange}
           onKeyDown={() => {}}
-          autoComplete="hello"
         />
       </Tile>
       <Examples
@@ -121,11 +121,11 @@ export default function App() {
             <Stack gap={6}>
               <h1>No data</h1>
               <Button
-                onClick={() =>
+                onClick={() => {
                   setSearch(
                     "ignore-dependencies:min-dash,min-dom ignore-dev-dependencies maintainers:bpmn-io-admin package:bpmn-js"
                   )
-                }
+                }}
               >
                 Try example
               </Button>

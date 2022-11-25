@@ -2,8 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import * as d3 from "d3";
 
-import { hierarchy, tree } from "d3-hierarchy";
-
 export default function Tree(props) {
   let {
     data,
@@ -42,7 +40,7 @@ export default function Tree(props) {
 
     let { width, height } = rect;
 
-    const root = hierarchy(data, ({ dependencies }) =>
+    const root = d3.hierarchy(data, ({ dependencies }) =>
       Object.values(dependencies)
     );
 
@@ -50,7 +48,7 @@ export default function Tree(props) {
     const dx = 25;
     const dy = width / (root.height + padding);
 
-    tree().nodeSize([dx, dy])(root);
+    d3.tree().nodeSize([dx, dy])(root);
 
     // center tree
     let x0 = Infinity;
@@ -67,10 +65,18 @@ export default function Tree(props) {
 
     const svg = d3.select(ref.current);
 
+    function zoomed({transform}) {
+      svg.selectAll('g').attr("transform", transform);
+    }
+
+    svg.call(d3.zoom()
+      .extent([[0, 0], [width, height]])
+      .scaleExtent([1, 8])
+      .on("zoom", zoomed));
+
     svg.selectAll("*").remove();
 
     svg
-
       .attr("viewBox", [(-dy * padding) / 2, x0 - dx, width, height])
       .attr("width", width)
       .attr("height", height)
@@ -83,6 +89,7 @@ export default function Tree(props) {
       .append("g")
       .attr("fill", "none")
       .attr("stroke", stroke)
+      // .attr("stroke", 'red') // debug
       .attr("stroke-opacity", strokeOpacity)
       .attr("stroke-linecap", strokeLinecap)
       .attr("stroke-linejoin", strokeLinejoin)
@@ -103,16 +110,25 @@ export default function Tree(props) {
       .selectAll("a")
       .data(root.descendants())
       .join("a")
-      .attr("xlink:href", (d) => d.data.pkgJson.homepage)
+      .attr("xlink:href", (d) => d.data.pkgJson ? d.data.pkgJson.homepage : `https://www.npmjs.com/search?q=${ d.data.name }`)
       .attr("target", "_blank")
       .attr("transform", (d) => `translate(${d.y},${d.x})`);
 
     node
       .append("circle")
-      .attr("fill", (d) => (d.children ? stroke : fill))
+      .attr("fill", (d) => {
+        const { data } = d;
+
+        const { error } = data;
+
+        if (error) return 'red';
+
+        return d.children ? stroke : fill;
+      })
+      // .attr("fill", 'blue') // debug
       .attr("r", r);
 
-    node.append("title").text((d) => d.data.name);
+    node.append("title").text(getLabel);
 
     node
       .append("text")
@@ -120,10 +136,18 @@ export default function Tree(props) {
       .attr("x", (d) => (d.children ? -6 : 6))
       .attr("text-anchor", (d) => (d.children ? "end" : "start"))
       .attr("paint-order", "stroke")
-      .attr("fill", (d) => (d.data.isDevDependency ? "#bbb" : "#000"))
+      .attr("fill", (d) => {
+        const { data } = d;
+
+        const { error } = data;
+
+        if (error) return 'red';
+
+        return d.data.isDevDependency ? "#bbb" : "#000";
+      })
       .attr("stroke", halo)
       .attr("stroke-width", haloWidth)
-      .text((d, i) => d.data.name);
+      .text(getLabel);
 
     return () => ref.current?.removeEventListener("drag", onMove);
   }, [data, rect]);
@@ -133,4 +157,23 @@ export default function Tree(props) {
       <svg ref={ref} />
     </div>
   );
+}
+
+function getLabel(d) {
+  const { data } = d;
+
+  const {
+    error,
+    pkgJson
+  } = data;
+
+  if (error) {
+    return `${d.data.name}@${error.version}`;
+  }
+
+  if (pkgJson) {
+    return `${d.data.name}@${d.data.pkgJson.version}`;
+  }
+
+  return d.data.name;
 }
