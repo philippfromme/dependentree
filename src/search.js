@@ -63,7 +63,6 @@ export function searchToQuery(search) {
     .parse()
     .toJSON()
     .map((field) => {
-      console.log("field", field);
 
       // boolean
       if (field.type === "in") {
@@ -75,8 +74,6 @@ export function searchToQuery(search) {
 
       // string
       if (field.type === "=") {
-        const type = fields[field.field];
-
         let value = field.value;
 
         if (value.length === 1) {
