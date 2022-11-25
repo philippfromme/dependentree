@@ -1,5 +1,5 @@
-@use '@carbon/react';
-@use '@carbon/layout/scss/generated/spacing';
+@use 'carbon-components-react/index.scss';
+@use '@carbon/layout/scss/generated/_spacing.scss';
 
 html, body, #app {
   height: 100%;

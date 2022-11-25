@@ -18,15 +18,15 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@carbon/icons-react": "^11.7.0",
+    "@carbon/icons-react": "^11.11.0",
     "camelcase": "^7.0.0",
-    "carbon-components-react": "^8.11.0",
+    "carbon-components-react": "^8.17.0",
     "d3": "^7.6.1",
     "d3-hierarchy": "^3.1.2",
     "filterable": "^2.0.1",
     "lodash": "^4.17.21",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react": "^16.14.0",
+    "react-dom": "^16.14.0",
   },
   "devDependencies": {
     "@babel/core": "^7.18.10",
