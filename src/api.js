@@ -42,6 +42,10 @@ async function _fetchPackage(options) {
 
   const pkgJson = await response.json();
 
+  if (pkgJson === 'Not Found') {
+    return null;
+  }
+
   let dependencies = {};
 
   console.log('depth', depth);

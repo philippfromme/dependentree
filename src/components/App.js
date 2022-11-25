@@ -15,7 +15,7 @@ import {
 
 import { Add, LogoGithub } from "@carbon/icons-react";
 
-import { matchesProperty } from "lodash";
+import { isNull, matchesProperty } from "lodash";
 
 import Tree from "./Tree";
 
@@ -30,7 +30,7 @@ import {
 
 export default function App() {
   const [data, setData] = useState(null);
-  const [fetching, setFetching] = useState(true);
+  const [fetching, setFetching] = useState(false);
   const [query, setQuery] = useState(null);
   const [search, setSearch] = useState("");
 
@@ -116,7 +116,7 @@ export default function App() {
             className="tree__loading"
             description="Fetching dependencies..."
           />
-        ) : data === null ? (
+        ) : isNull(data) ? (
           <Tile className="tile-no-data">
             <Stack gap={6}>
               <h1>No data</h1>
