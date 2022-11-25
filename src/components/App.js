@@ -95,7 +95,7 @@ export default function App() {
       </Header>
       <Tile>
         <Search
-          autoComplete="false"
+          autoComplete="off"
           spellCheck={false}
           size="lg"
           value={search}

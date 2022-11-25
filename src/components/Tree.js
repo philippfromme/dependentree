@@ -13,8 +13,10 @@ export default function Tree(props) {
     strokeOpacity = 0.5,
     strokeWidth = 1,
     r = 2,
-    halo = "#fff",
+    halo = "transparent",
     haloWidth = 3,
+    tagColor = '#e0e0e0',
+    fontSize = '1em'
   } = props;
 
   const [rect, setRect] = useState(null);
@@ -82,7 +84,7 @@ export default function Tree(props) {
       .attr("height", height)
       .attr("style", "max-width: 100%; height: auto; height: intrinsic;")
       .attr("font-family", "IBM Plex Sans")
-      .attr("font-size", 16);
+      .attr("font-size", fontSize);
 
     // tree branches
     svg
@@ -130,6 +132,15 @@ export default function Tree(props) {
 
     node.append("title").text(getLabel);
 
+    node.append('rect')
+      .attr("y", "-0.5em")
+      .attr('rx', '0.5em')
+      .attr('height', '1em')
+      .attr('width', '1em')
+      .attr('stroke', tagColor)
+      .attr('stroke-width', '0.65em')
+      .attr('fill', tagColor);
+
     node
       .append("text")
       .attr("dy", "0.32em")
@@ -143,11 +154,18 @@ export default function Tree(props) {
 
         if (error) return 'red';
 
-        return d.data.isDevDependency ? "#bbb" : "#000";
+        return data.isDevDependency ? "#bbb" : "#000";
       })
       .attr("stroke", halo)
       .attr("stroke-width", haloWidth)
-      .text(getLabel);
+      .text(getLabel)
+      .each(function(d) {
+        d.width = this.getComputedTextLength();
+      });
+
+      node.select("rect")
+        .attr("x", (d) => (d.children ? -6 - d.width : 6))
+        .attr("width", (d) => d.width);
 
     return () => ref.current?.removeEventListener("drag", onMove);
   }, [data, rect]);
