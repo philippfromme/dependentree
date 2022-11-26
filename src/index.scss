@@ -1,6 +1,15 @@
 @use 'carbon-components-react/index.scss';
 @use '@carbon/layout/scss/generated/_spacing.scss';
 
+:root {
+  --black: #161616;
+  --white: #f0f0f0;
+  --blue: hsl(205, 100%, 45%);
+  --green: hsl(150, 86%, 44%);
+  --red: hsl(360, 100%, 45%);
+  --yellow: hsl(47, 88%, 53%);
+}
+
 html, body, #app {
   height: 100%;
 }
@@ -12,6 +21,7 @@ html, body, #app {
 }
 
 .content {
+  position: relative;
   flex-grow: 1;
   display: flex;
   justify-content: center;
@@ -27,6 +37,22 @@ html, body, #app {
     height: 100%;
     user-select: none;
   }
+
+  .legend {
+    position: absolute;
+    left: 1rem;
+    bottom: 1rem;
+
+    li {
+      display: flex;
+      align-items: center;
+      margin-top: 0.25rem;
+
+      svg {
+        margin-right: 0.25rem;
+      }
+    }
+  }
 }
 
 .tile-no-data {
@@ -40,6 +66,10 @@ html, body, #app {
 }
 
 /* overrides */
+
+.cds--header__name svg {
+  margin-right: 0.5rem;
+}
 
 .cds--actionable-notification--toast {
   flex-direction: column;

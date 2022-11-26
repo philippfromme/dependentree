@@ -15,7 +15,7 @@ import {
   Tile,
 } from "carbon-components-react";
 
-import { Add, ErrorOutline, LogoGithub } from "@carbon/icons-react";
+import { Add, CircleSolid, LogoGithub, TreeView } from "@carbon/icons-react";
 
 import { isNull, matchesProperty } from "lodash";
 
@@ -56,7 +56,7 @@ export default function App() {
     <>
       <Header aria-label="Dependentree">
         <HeaderName href="#" prefix="">
-          Dependentree
+          <TreeView size={24} /> Dependentree
         </HeaderName>
         <HeaderGlobalBar>
           <HeaderGlobalAction
@@ -152,6 +152,25 @@ function Content(props) {
   return (
     <div className="content">
       <Tree data={data} />
+      <div class="legend">
+        <ul>
+          <li>
+            <CircleSolid size={16} fill="var(--green)" /> Root
+          </li>
+          <li>
+            <CircleSolid size={16} fill="var(--blue)" /> Production dependency
+          </li>
+          <li>
+            <CircleSolid size={16} fill="var(--white)" /> Development dependency
+          </li>
+          <li>
+            <CircleSolid size={16} fill="var(--yellow)" /> Peer dependency
+          </li>
+          <li>
+            <CircleSolid size={16} fill="var(--red)" /> Error
+          </li>
+        </ul>
+      </div>
     </div>
   );
 }
@@ -162,19 +181,19 @@ function Examples(props) {
   let tags = [];
 
   if (!query?.find(matchesProperty("name", "ignore-dependencies"))) {
-    tags = [...tags, "ignore-dependencies:react"];
+    tags = [...tags, "ignore-dependencies:diagram-js"];
   }
 
   if (!query?.find(matchesProperty("name", "ignore-dev-dependencies"))) {
-    tags = [...tags, "ignore-dev-dependencies:webpack"];
+    tags = [...tags, "ignore-dev-dependencies:camunda-bpmn-js-behaviors"];
   }
 
   if (!query?.find(matchesProperty("name", "ignore-peer-dependencies"))) {
-    tags = [...tags, "ignore-peer-dependencies:react"];
+    tags = [...tags, "ignore-peer-dependencies:@bpmn-io/properties-panel"];
   }
 
   if (!query?.find(matchesProperty("name", "maintainers"))) {
-    tags = [...tags, "maintainers:philippfromme"];
+    tags = [...tags, "maintainers:bpmn-io-admin"];
   }
 
   if (!query?.find(matchesProperty("name", "max-depth"))) {
@@ -182,11 +201,7 @@ function Examples(props) {
   }
 
   if (!query?.find(matchesProperty("name", "package"))) {
-    tags = [...tags, "package:webpack"];
-  }
-
-  if (!query?.find(matchesProperty("name", "version"))) {
-    tags = [...tags, "version:1.0.0"];
+    tags = [...tags, "package:bpmn-js-properties-panel@latest"];
   }
 
   return (

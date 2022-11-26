@@ -9,7 +9,6 @@ const fields = [
   "maintainers",
   "max-depth",
   "package",
-  "version",
 ];
 
 export function paramsToSearch(params) {

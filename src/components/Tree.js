@@ -6,8 +6,8 @@ export default function Tree(props) {
   let {
     data,
     padding = 2,
-    fill = "#000",
-    stroke = "#000",
+    fill = "var(--black)",
+    stroke = "var(--black)",
     strokeLinecap,
     strokeLinejoin,
     strokeOpacity = 0.5,
@@ -15,9 +15,34 @@ export default function Tree(props) {
     r = 2,
     halo = "transparent",
     haloWidth = 3,
-    tagColor = "#e0e0e0",
+    defaultBackgroundColor = "var(--green)",
+    dependencyBackgroundColor = "var(--blue)",
+    devDependencyBackgroundColor = "var(--white)",
+    peerDependencyBackgroundColor = "var(--yellow)",
+    errorBackgroundColor = "var(--red)",
+    defaultTextColor = "var(--white)",
+    dependencyTextColor = "var(--white)",
+    devDependencyTextColor = "var(--black)",
+    peerDependencyTextColor = "var(--black)",
+    errorTextColor = "var(--white)",
     fontSize = "1em",
   } = props;
+
+  function getBackgroundColor(d) {
+    if (d.data.error) return errorBackgroundColor;
+    if (d.data.isDevDependency) return devDependencyBackgroundColor;
+    if (d.data.isPeerDependency) return peerDependencyBackgroundColor;
+    if (d.data.isDependency) return dependencyBackgroundColor;
+    return defaultBackgroundColor;
+  }
+
+  function getTextColor(d) {
+    if (d.data.error) return errorTextColor;
+    if (d.data.isDevDependency) return devDependencyTextColor;
+    if (d.data.isPeerDependency) return peerDependencyTextColor;
+    if (d.data.isDependency) return dependencyTextColor;
+    return defaultTextColor;
+  }
 
   const [rect, setRect] = useState(null);
 
@@ -148,9 +173,9 @@ export default function Tree(props) {
       .attr("rx", "0.5em")
       .attr("height", "1em")
       .attr("width", "1em")
-      .attr("stroke", tagColor)
+      .attr("stroke", getBackgroundColor)
       .attr("stroke-width", "0.65em")
-      .attr("fill", tagColor);
+      .attr("fill", getBackgroundColor);
 
     node
       .append("text")
@@ -158,15 +183,7 @@ export default function Tree(props) {
       .attr("x", (d) => (d.children ? -6 : 6))
       .attr("text-anchor", (d) => (d.children ? "end" : "start"))
       .attr("paint-order", "stroke")
-      .attr("fill", (d) => {
-        const { data } = d;
-
-        const { error } = data;
-
-        if (error) return "red";
-
-        return data.isDevDependency ? "#bbb" : "#000";
-      })
+      .attr("fill", getTextColor)
       .attr("stroke", halo)
       .attr("stroke-width", haloWidth)
       .text(getLabel)

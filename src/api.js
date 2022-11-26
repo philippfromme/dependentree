@@ -26,13 +26,30 @@ async function _fetchPackage(options) {
     maintainers = [],
     ignoreDependencies = false,
     ignoreDevDependencies = true,
+    ignorePeerDependencies = true,
     depth = 0,
     maxDepth = Infinity,
-    version = "latest",
+    version,
   } = options;
 
   if (!pkgName) {
     return null;
+  }
+
+  const parsed = npa(pkgName);
+
+  const { name } = parsed;
+
+  pkgName = name;
+
+  if (!version) {
+    const { type } = parsed;
+
+    if (["range", "tag", "version"].includes(type)) {
+      const { fetchSpec } = parsed;
+
+      version = fetchSpec === "*" ? "latest" : fetchSpec;
+    }
   }
 
   console.log(`fetching "${pkgName}": "${version}"`);
@@ -105,7 +122,13 @@ async function _fetchPackage(options) {
           !maintainers.length ||
           isMaintainedBy(dependencyNode.pkgJson, maintainers)
         ) {
-          dependencies = { ...dependencies, [dependency]: dependencyNode };
+          dependencies = {
+            ...dependencies,
+            [dependency]: {
+              ...dependencyNode,
+              isDependency: true,
+            },
+          };
         }
       }
     }
@@ -130,6 +153,7 @@ async function _fetchPackage(options) {
             package: devDependency,
             ignoreDependencies: true,
             ignoreDevDependencies: true,
+            ignorePeerDependencies: true,
             depth: depth + 1,
           });
         } else {
@@ -145,13 +169,62 @@ async function _fetchPackage(options) {
 
         if (
           !maintainers.length ||
-          isMaintainedBy(_dependency.pkgJson, maintainers)
+          isMaintainedBy(devDependencyNode.pkgJson, maintainers)
         ) {
           dependencies = {
             ...dependencies,
             [devDependency]: {
               ...devDependencyNode,
               isDevDependency: true,
+            },
+          };
+        }
+      }
+    }
+  }
+
+  if (ignorePeerDependencies !== true) {
+    for (let peerDependency in pkgJson.peerDependencies) {
+      if (
+        !isArray(ignorePeerDependencies) ||
+        !ignorePeerDependencies.includes(peerDependency)
+      ) {
+        let peerDependencyNode;
+
+        if (semver.validRange(pkgJson.peerDependencies[peerDependency])) {
+          const { version } = semver.minVersion(
+            pkgJson.peerDependencies[peerDependency]
+          );
+
+          peerDependencyNode = await _fetchPackage({
+            ...options,
+            version,
+            package: peerDependency,
+            ignoreDependencies: true,
+            ignoreDevDependencies: true,
+            ignorePeerDependencies: true,
+            depth: depth + 1,
+          });
+        } else {
+          peerDependencyNode = {
+            name: peerDependency,
+            pkgJson: null,
+            dependencies: {},
+            error: {
+              version: pkgJson.peerDependencies[peerDependency],
+            },
+          };
+        }
+
+        if (
+          !maintainers.length ||
+          isMaintainedBy(peerDependencyNode.pkgJson, maintainers)
+        ) {
+          dependencies = {
+            ...dependencies,
+            [peerDependency]: {
+              ...peerDependencyNode,
+              isPeerDependency: true,
             },
           };
         }
