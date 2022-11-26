@@ -1,4 +1,6 @@
-import { isArray, isObject, omit } from "lodash";
+import { isArray, isNull, isObject } from "lodash";
+
+import npa from "npm-package-arg";
 
 import semver from "semver";
 
@@ -33,18 +35,15 @@ async function _fetchPackage(options) {
     return null;
   }
 
-  console.log(`fetching ${pkgName}@${version}`);
+  console.log(`fetching "${pkgName}": "${version}"`);
 
-  const response = await fetch(
-    `https://registry.npmjs.org/${pkgName}/${version}`,
-    {
-      signal: controller.signal,
-    }
-  );
+  if (!canFetchPackage(version)) {
+    throw new Error("Failed to fetch");
+  }
 
-  const pkgJson = await response.json();
+  const pkgJson = await _fetchPackageJson(pkgName, version);
 
-  if (!isObject(pkgJson)) {
+  if (isNull(pkgJson)) {
     if (depth === 0) {
       throw new Error("Failed to fetch");
     }
@@ -165,4 +164,67 @@ async function _fetchPackage(options) {
     pkgJson,
     dependencies,
   };
+}
+
+const fetchTypes = ["git", "range", "remote"];
+
+/**
+ * @see https://docs.npmjs.com/cli/v9/configuring-npm/package-json#dependencies
+ *
+ * @param {string} pkgName
+ * @param {string} version
+ *
+ * @returns {Object|null}
+ */
+async function _fetchPackageJson(pkgName, version) {
+  let parsed;
+
+  try {
+    parsed = npa(version);
+  } catch (error) {
+    return null;
+  }
+
+  const { type } = parsed;
+
+  if (type === "git") {
+    console.log("not fetching GitHub");
+
+    return null;
+  } else if (type === "remote") {
+    console.log("not fetching URL");
+
+    return null;
+  } else if (type === "range") {
+    const response = await fetch(
+      `https://registry.npmjs.org/${pkgName}/${version}`,
+      {
+        signal: controller.signal,
+      }
+    );
+
+    const pkgJson = await response.json();
+
+    if (!isObject(pkgJson)) {
+      return null;
+    }
+
+    return pkgJson;
+  }
+
+  return null;
+}
+
+function canFetchPackage(version) {
+  let parsed;
+
+  try {
+    parsed = npa(version);
+
+    const { type } = parsed;
+
+    return fetchTypes.includes(type);
+  } catch (error) {
+    return null;
+  }
 }

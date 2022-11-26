@@ -1,6 +1,6 @@
 const path = require("path");
 
-const { DefinePlugin } = require("webpack");
+const { DefinePlugin, ProvidePlugin } = require("webpack");
 
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
@@ -30,10 +30,21 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: "./src/index.html",
     }),
+    new ProvidePlugin({
+      process: require.resolve("process/browser"),
+    }),
   ],
   devtool: "eval-source-map",
   devServer: {
     hot: false,
     liveReload: false,
+  },
+  resolve: {
+    fallback: {
+      os: require.resolve("os"),
+      path: require.resolve("path-browserify"),
+      process: require.resolve("process/browser"),
+      url: require.resolve("url"),
+    },
   },
 };
