@@ -29,21 +29,29 @@ import {
 } from "../search";
 
 export default function App() {
+
+  /** @type Object|null */
   const [data, setData] = useState(null);
+
+  /** @type boolean */
   const [fetching, setFetching] = useState(false);
+
+  /** @type Object */
   const [query, setQuery] = useState(null);
+
+  /** @type {string} */
   const [search, setSearch] = useState("");
 
+  /** Set inital search if in URL search params */
   useState(() => {
     const params = new URLSearchParams(location.search);
 
     const search = paramsToSearch(params);
 
-    // console.log(location.search, search);
-
     setSearch(search);
   }, []);
 
+  /** Create query from search and set search in URL search params if search changed */
   useEffect(() => {
     const query = searchToQuery(search);
 
@@ -51,9 +59,10 @@ export default function App() {
 
     const params = queryToParams(query);
 
-    history.pushState(null, "", location.pathname + "?" + params.toString());
+    history.pushState(null, "", `${ location.pathname }?${ params.toString() }`);
   }, [search]);
 
+  /** Fetch packages if query changed */
   useEffect(() => {
     if (!query || !query.length) return;
 
