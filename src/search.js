@@ -9,7 +9,7 @@ const fields = [
   "maintainers",
   "max-depth",
   "package",
-  "version"
+  "version",
 ];
 
 export function paramsToSearch(params) {
@@ -37,7 +37,7 @@ export function queryToOptions(query) {
     if (fields.includes(field.name)) {
       options = {
         ...options,
-        [camelCase(field.name)]: field.value
+        [camelCase(field.name)]: field.value,
       };
     }
   }
@@ -63,12 +63,11 @@ export function searchToQuery(search) {
     .parse()
     .toJSON()
     .map((field) => {
-
       // boolean
       if (field.type === "in") {
         return {
           name: field.value,
-          value: true
+          value: true,
         };
       }
 
@@ -82,7 +81,7 @@ export function searchToQuery(search) {
 
         return {
           name: field.field,
-          value
+          value,
         };
       }
 

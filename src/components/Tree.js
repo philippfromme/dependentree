@@ -15,8 +15,8 @@ export default function Tree(props) {
     r = 2,
     halo = "transparent",
     haloWidth = 3,
-    tagColor = '#e0e0e0',
-    fontSize = '1em'
+    tagColor = "#e0e0e0",
+    fontSize = "1em",
   } = props;
 
   const [rect, setRect] = useState(null);
@@ -47,7 +47,7 @@ export default function Tree(props) {
     );
 
     // compute layout
-    const dx = 25;
+    const dx = 50;
     const dy = width / (root.height + padding);
 
     d3.tree().nodeSize([dx, dy])(root);
@@ -67,14 +67,20 @@ export default function Tree(props) {
 
     const svg = d3.select(ref.current);
 
-    function zoomed({transform}) {
-      svg.selectAll('g').attr("transform", transform);
+    function zoomed({ transform }) {
+      svg.selectAll("g").attr("transform", transform);
     }
 
-    svg.call(d3.zoom()
-      .extent([[0, 0], [width, height]])
-      .scaleExtent([1, 8])
-      .on("zoom", zoomed));
+    svg.call(
+      d3
+        .zoom()
+        .extent([
+          [0, 0],
+          [width, height],
+        ])
+        .scaleExtent([0.25, 8])
+        .on("zoom", zoomed)
+    );
 
     svg.selectAll("*").remove();
 
@@ -112,7 +118,11 @@ export default function Tree(props) {
       .selectAll("a")
       .data(root.descendants())
       .join("a")
-      .attr("xlink:href", (d) => d.data.pkgJson ? d.data.pkgJson.homepage : `https://www.npmjs.com/search?q=${ d.data.name }`)
+      .attr("xlink:href", (d) =>
+        d.data.pkgJson
+          ? d.data.pkgJson.homepage
+          : `https://www.npmjs.com/search?q=${d.data.name}`
+      )
       .attr("target", "_blank")
       .attr("transform", (d) => `translate(${d.y},${d.x})`);
 
@@ -123,7 +133,7 @@ export default function Tree(props) {
 
         const { error } = data;
 
-        if (error) return 'red';
+        if (error) return "red";
 
         return d.children ? stroke : fill;
       })
@@ -132,14 +142,15 @@ export default function Tree(props) {
 
     node.append("title").text(getLabel);
 
-    node.append('rect')
+    node
+      .append("rect")
       .attr("y", "-0.5em")
-      .attr('rx', '0.5em')
-      .attr('height', '1em')
-      .attr('width', '1em')
-      .attr('stroke', tagColor)
-      .attr('stroke-width', '0.65em')
-      .attr('fill', tagColor);
+      .attr("rx", "0.5em")
+      .attr("height", "1em")
+      .attr("width", "1em")
+      .attr("stroke", tagColor)
+      .attr("stroke-width", "0.65em")
+      .attr("fill", tagColor);
 
     node
       .append("text")
@@ -152,26 +163,27 @@ export default function Tree(props) {
 
         const { error } = data;
 
-        if (error) return 'red';
+        if (error) return "red";
 
         return data.isDevDependency ? "#bbb" : "#000";
       })
       .attr("stroke", halo)
       .attr("stroke-width", haloWidth)
       .text(getLabel)
-      .each(function(d) {
+      .each(function (d) {
         d.width = this.getComputedTextLength();
       });
 
-      node.select("rect")
-        .attr("x", (d) => (d.children ? -6 - d.width : 6))
-        .attr("width", (d) => d.width);
+    node
+      .select("rect")
+      .attr("x", (d) => (d.children ? -6 - d.width : 6))
+      .attr("width", (d) => d.width);
 
     return () => ref.current?.removeEventListener("drag", onMove);
   }, [data, rect]);
 
   return (
-    <div className="tree__svg" ref={measuredRef}>
+    <div className="content__svg" ref={measuredRef}>
       <svg ref={ref} />
     </div>
   );
@@ -180,10 +192,7 @@ export default function Tree(props) {
 function getLabel(d) {
   const { data } = d;
 
-  const {
-    error,
-    pkgJson
-  } = data;
+  const { error, pkgJson } = data;
 
   if (error) {
     return `${d.data.name}@${error.version}`;

@@ -1,6 +1,6 @@
 import { isArray, isObject, omit } from "lodash";
 
-import semver from 'semver';
+import semver from "semver";
 
 export function isMaintainedBy(pkgJson, maintainers) {
   return pkgJson.maintainers.find(({ name }) => maintainers.includes(name));
@@ -13,7 +13,7 @@ export async function fetchPackage(options) {
 
   controller = new AbortController();
 
-  console.log('fetching with options', options);
+  console.log("fetching with options", options);
 
   return _fetchPackage(options);
 }
@@ -45,20 +45,24 @@ async function _fetchPackage(options) {
   const pkgJson = await response.json();
 
   if (!isObject(pkgJson)) {
+    if (depth === 0) {
+      throw new Error("Failed to fetch");
+    }
+
     return {
       name: pkgName,
       pkgJson: null,
       dependencies: {},
       error: {
-        version
-      }
-    };;
+        version,
+      },
+    };
   }
 
   let dependencies = {};
 
-  console.log('depth', depth);
-  console.log('max depth', parseInt(maxDepth, 10));
+  console.log("depth", depth);
+  console.log("max depth", parseInt(maxDepth, 10));
 
   if (parseInt(maxDepth, 10) !== NaN && depth === parseInt(maxDepth, 10)) {
     return {
@@ -70,12 +74,17 @@ async function _fetchPackage(options) {
 
   if (ignoreDependencies !== true) {
     for (let dependency in pkgJson.dependencies) {
-      if (!isArray(ignoreDependencies) || !ignoreDependencies.includes(dependency)) {
+      if (
+        !isArray(ignoreDependencies) ||
+        !ignoreDependencies.includes(dependency)
+      ) {
         let dependencyNode;
 
-        if (semver.validRange(pkgJson.dependencies[ dependency ])) {
-          const { version } = semver.minVersion(pkgJson.dependencies[ dependency ]);
-  
+        if (semver.validRange(pkgJson.dependencies[dependency])) {
+          const { version } = semver.minVersion(
+            pkgJson.dependencies[dependency]
+          );
+
           dependencyNode = await _fetchPackage({
             ...options,
             version,
@@ -88,8 +97,8 @@ async function _fetchPackage(options) {
             pkgJson: null,
             dependencies: {},
             error: {
-              version: pkgJson.dependencies[ dependency ]
-            }
+              version: pkgJson.dependencies[dependency],
+            },
           };
         }
 
@@ -105,12 +114,17 @@ async function _fetchPackage(options) {
 
   if (ignoreDevDependencies !== true) {
     for (let devDependency in pkgJson.devDependencies) {
-      if (!isArray(ignoreDevDependencies) || !ignoreDevDependencies.includes(devDependency)) {
+      if (
+        !isArray(ignoreDevDependencies) ||
+        !ignoreDevDependencies.includes(devDependency)
+      ) {
         let devDependencyNode;
 
-        if (semver.validRange(pkgJson.devDependencies[ devDependency ])) {
-          const { version } = semver.minVersion(pkgJson.devDependencies[ devDependency ]);
-  
+        if (semver.validRange(pkgJson.devDependencies[devDependency])) {
+          const { version } = semver.minVersion(
+            pkgJson.devDependencies[devDependency]
+          );
+
           devDependencyNode = await _fetchPackage({
             ...options,
             version,
@@ -125,8 +139,8 @@ async function _fetchPackage(options) {
             pkgJson: null,
             dependencies: {},
             error: {
-              version: pkgJson.devDependencies[ devDependency ]
-            }
+              version: pkgJson.devDependencies[devDependency],
+            },
           };
         }
 
@@ -149,6 +163,6 @@ async function _fetchPackage(options) {
   return {
     name: pkgJson.name,
     pkgJson,
-    dependencies
+    dependencies,
   };
 }

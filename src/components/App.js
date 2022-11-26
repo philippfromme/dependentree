@@ -1,19 +1,21 @@
 import React, { useCallback, useEffect, useState } from "react";
 
 import {
+  ActionableNotification,
   Button,
   Header,
   HeaderName,
   HeaderGlobalBar,
   HeaderGlobalAction,
   InlineLoading,
+  InlineNotification,
   Search,
   Stack,
   Tag,
   Tile,
 } from "carbon-components-react";
 
-import { Add, LogoGithub } from "@carbon/icons-react";
+import { Add, ErrorOutline, LogoGithub } from "@carbon/icons-react";
 
 import { isNull, matchesProperty } from "lodash";
 
@@ -29,16 +31,6 @@ import {
 } from "../search";
 
 export default function App() {
-
-  /** @type Object|null */
-  const [data, setData] = useState(null);
-
-  /** @type boolean */
-  const [fetching, setFetching] = useState(false);
-
-  /** @type Object */
-  const [query, setQuery] = useState(null);
-
   /** @type {string} */
   const [search, setSearch] = useState("");
 
@@ -51,40 +43,14 @@ export default function App() {
     setSearch(search);
   }, []);
 
-  /** Create query from search and set search in URL search params if search changed */
-  useEffect(() => {
-    const query = searchToQuery(search);
-
-    setQuery(query);
-
-    const params = queryToParams(query);
-
-    history.pushState(null, "", `${ location.pathname }?${ params.toString() }`);
-  }, [search]);
-
-  /** Fetch packages if query changed */
-  useEffect(() => {
-    if (!query || !query.length) return;
-
-    (async () => {
-      setFetching(true);
-
-      try {
-        const pkgs = await fetchPackage(queryToOptions(query));
-
-        setData(pkgs);
-      } catch (error) {
-        console.log("error fetching packages", error);
-      }
-
-      setFetching(false);
-    })();
-  }, [query]);
+  const { data, error, fetching, query } = useFetchPackages(search);
 
   const onSearchChange = useCallback(
     ({ target }) => setSearch(target.value),
     [setSearch]
   );
+
+  console.log("fetching", fetching);
 
   return (
     <>
@@ -119,32 +85,74 @@ export default function App() {
         query={query}
         onClick={(example) => setSearch(`${search.trim()} ${example}`)}
       />
-      <div className="tree">
-        {fetching ? (
-          <InlineLoading
-            className="tree__loading"
-            description="Fetching dependencies..."
-          />
-        ) : isNull(data) ? (
-          <Tile className="tile-no-data">
-            <Stack gap={6}>
-              <h1>No data</h1>
-              <Button
-                onClick={() => {
-                  setSearch(
-                    "ignore-dependencies:min-dash,min-dom ignore-dev-dependencies maintainers:bpmn-io-admin package:bpmn-js"
-                  )
-                }}
-              >
-                Try example
-              </Button>
-            </Stack>
-          </Tile>
-        ) : (
-          <Tree data={data} />
-        )}
-      </div>
+      <Content
+        data={data}
+        error={error}
+        fetching={fetching}
+        setSearch={setSearch}
+      />
     </>
+  );
+}
+
+function Content(props) {
+  const { data, error, fetching, setSearch } = props;
+
+  if (error) {
+    return (
+      <div className="content">
+        <ActionableNotification
+          actionButtonLabel="Try example"
+          onActionButtonClick={() => {
+            setSearch(
+              "ignore-dependencies:min-dash,min-dom ignore-dev-dependencies maintainers:bpmn-io-admin package:bpmn-js"
+            );
+          }}
+          statusIconDescription="Could not fetch dependencies"
+          subtitle={error}
+          title="Could not fetch dependencies"
+          hideCloseButton={true}
+          kind="error"
+        />
+      </div>
+    );
+  }
+
+  if (fetching) {
+    return (
+      <div className="content">
+        <InlineLoading
+          className="content__loading"
+          description="Fetching dependencies..."
+        />
+      </div>
+    );
+  }
+
+  if (isNull(data)) {
+    return (
+      <div className="content">
+        <ActionableNotification
+          actionButtonLabel="Try example"
+          onActionButtonClick={() => {
+            setSearch(
+              "ignore-dependencies:min-dash,min-dom ignore-dev-dependencies maintainers:bpmn-io-admin package:bpmn-js"
+            );
+          }}
+          statusIconDescription="No dependencies to display"
+          subtitle=""
+          title="No dependencies to display"
+          hideCloseButton={true}
+          kind="info"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="content">
+      <Tree data={data} />
+    </div>
   );
 }
 
@@ -197,4 +205,68 @@ function Examples(props) {
       ))}
     </Tile>
   );
+}
+
+function useFetchPackages(search) {
+  /** @type Object|null */
+  const [data, setData] = useState(null);
+
+  /** @type string|null */
+  const [error, setError] = useState(null);
+
+  /** @type boolean */
+  const [fetching, setFetching] = useState(false);
+
+  /** @type Object */
+  const [query, setQuery] = useState(null);
+
+  /** Create query from search and set search in URL search params if search changed */
+  useEffect(() => {
+    const query = searchToQuery(search);
+
+    setQuery(query);
+
+    const params = queryToParams(query);
+
+    history.pushState(null, "", `${location.pathname}?${params.toString()}`);
+  }, [search]);
+
+  /** Fetch packages if query changed */
+  useEffect(() => {
+    if (!query || !query.length) {
+      setData(null);
+
+      setError(null);
+
+      return;
+    }
+
+    (async () => {
+      setFetching(true);
+
+      setError(null);
+
+      try {
+        const pkgs = await fetchPackage(queryToOptions(query));
+
+        setData(pkgs);
+
+        setError(null);
+      } catch (error) {
+        console.log(error);
+
+        if (error.message !== "The user aborted a request.")
+          setError(error.message);
+      }
+
+      setFetching(false);
+    })();
+  }, [query]);
+
+  return {
+    data,
+    error,
+    fetching,
+    query,
+  };
 }

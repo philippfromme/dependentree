@@ -11,18 +11,18 @@ html, body, #app {
   padding-top: spacing.$spacing-09;
 }
 
-.tree {
+.content {
   flex-grow: 1;
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 12px;
 
-  .tree__loading {
+  .content__loading {
     width: auto;
   }
 
-  .tree__svg {
+  .content__svg {
     width: 100%;
     height: 100%;
     user-select: none;
@@ -37,4 +37,11 @@ html, body, #app {
 .tile-examples {
   min-height: 0;
   padding-top: 0;
+}
+
+/* overrides */
+
+.cds--actionable-notification--toast {
+  flex-direction: column;
+  min-width: 50%;
 }
