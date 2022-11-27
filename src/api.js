@@ -2,6 +2,9 @@ import { isArray, isNull, isObject } from "lodash";
 
 import npa from "npm-package-arg";
 
+import hostedGitInfo from "hosted-git-info";
+import isGitHubShorthand from "hosted-git-info/lib/is-github-shorthand";
+
 import semver from "semver";
 
 export function isMaintainedBy(pkgJson, maintainers) {
@@ -261,7 +264,7 @@ async function _fetchPackageJson(pkgName, version) {
   const { type } = parsed;
 
   if (type === "git") {
-    console.log("not fetching GitHub");
+    console.log("not fetching git");
 
     return null;
   } else if (type === "remote") {
